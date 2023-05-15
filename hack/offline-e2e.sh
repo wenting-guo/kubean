@@ -41,10 +41,8 @@ export LOCAL_REPO_ALIAS="kubean_release"
 export LOCAL_RELEASE_NAME=kubean
 #= export E2eInstallClusterYamlFolder="e2e-install-cluster"
 
-chmod +x ${REPO_ROOT}/hack/offline_run_amd64.sh
-chmod +x ${REPO_ROOT}/hack/offline_run_arm64.sh
-chmod +x ${REPO_ROOT}/hack/offline_run_centos.sh
-chmod +x ${REPO_ROOT}/hack/run-network-e2e.sh
+chmod +x ${REPO_ROOT}/hack/*.sh
+
 
 registry_addr_amd64=${RUNNER_NODE_IP}:${REGISTRY_PORT_AMD64}
 registry_addr_arm64=${RUNNER_NODE_IP}:${REGISTRY_PORT_ARM64}
@@ -69,6 +67,8 @@ fi
 helm repo add ${local_helm_repo_alias} ${HELM_REPO}
 helm repo update
 helm repo list
+
+if [ "${"Stage"}" == "KUBEAN-COMPATIBILITY" ]; then
 
 KIND_VERSION="release-ci.daocloud.io/kpanda/kindest-node:v1.25.3"
 ./hack/local-up-kindcluster.sh "${HELM_CHART_VERSION}" "${IMAGE_VERSION}" "${HELM_REPO}" "${IMG_REGISTRY}" "${KIND_VERSION}" "${CLUSTER_PREFIX}"-host

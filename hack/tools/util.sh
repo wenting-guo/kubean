@@ -6,10 +6,9 @@ set -o pipefail
 
 # This script holds common bash variables and utility functions.
 
-ETCD_POD_LABEL="etcd"
-KUBE_CONTROLLER_POD_LABEL="kube-controller-manager"
-
-MIN_Go_VERSION=go1.16.0
+# not used, pre to delete
+# ETCD_POD_LABEL="etcd"
+# KUBE_CONTROLLER_POD_LABEL="kube-controller-manager"
 
 # This function installs a Go tools by 'go get' command.
 # Parameters:
@@ -18,6 +17,7 @@ MIN_Go_VERSION=go1.16.0
 # Note:
 #   Since 'go get' command will resolve and add dependencies to current module, that may update 'go.mod' and 'go.sum' file.
 #   So we use a temporary directory to install the tools.
+
 function util::install_tools() {
 	local package="$1"
 	local version="$2"
@@ -118,6 +118,19 @@ function util::install_kind {
     	exit 1
 	fi
 }
+
+function util::kubean_repo_prepare(){
+  repoCount=true
+  helm repo list |awk '{print $1}'| grep "${LOCAL_REPO_ALIAS}" || repoCount=false
+  echo "repoCount: $repoCount"
+  if [ "$repoCount" != "false" ]; then
+      helm repo remove ${LOCAL_REPO_ALIAS}
+  fi
+  helm repo add ${LOCAL_REPO_ALIAS} ${HELM_REPO}
+  helm repo update ${LOCAL_REPO_ALIAS}
+}
+
+
 
 # util::wait_for_condition blocks until the provided condition becomes true
 # Arguments:
@@ -299,145 +312,7 @@ function util::check_clusters_ready() {
 	util::wait_for_condition 'ok' "kubectl --kubeconfig ${kubeconfig_path} --context ${context_name} get --raw=/healthz &> /dev/null" 300
 }
 
-# shellcheck disable=SC1036
-function util::vm_name_ip_init_online_by_os(){
-  echo "RUNNER NAME: " $RUNNER_NAME
-  declare -u  OS_NAME=$1
-  echo "OS_NAME: " ${OS_NAME}
-  if [ "${RUNNER_NAME}" == "debug" ]; then
-      case ${OS_NAME} in
-          "CENTOS7")
-             vm_ip_addr1="10.6.178.211"
-             vm_ip_addr2="10.6.178.212"
-             vm_name1="gwt-kubean-e2e-node211"
-             vm_name2="gwt-kubean-e2e-node212"
-             ;;
-          "KYLINV10")
-              vm_ip_addr1="10.6.178.73"
-              vm_ip_addr2="10.6.178.74"
-              vm_name1="gwt-kubean-e2e-node73"
-              vm_name2="gwt-kubean-e2e-node74"
-              ;;
-          "REDHAT8")
-              vm_ip_addr1="10.6.178.215"
-              vm_ip_addr2="10.6.178.216"
-              vm_name1="gwt-kubean-e2e-redhat8-node215"
-              vm_name2="gwt-kubean-e2e-redhat8-node216"
-              ;;
-          "REDHAT7")
-              vm_ip_addr1="10.6.178.213"
-              vm_ip_addr2="10.6.178.214"
-              vm_name1="gwt-kubean-e2e-redhat8-node213"
-              vm_name2="gwt-kubean-e2e-redhat8-node214"
-              ;;
-          "CENTOS7-HK")
-              vm_ip_addr1="10.6.178.217"
-              vm_ip_addr2="10.6.178.218"
-              vm_name1="gwt-kubean-e2e-hk-node217"
-              vm_name2="gwt-kubean-e2e-hk-node218"
-              ;;
-      esac
-  fi
-  if [ "${RUNNER_NAME}" == "debug2" ]; then
-        case ${OS_NAME} in
-            "CENTOS7")
-               vm_ip_addr1="10.6.178.221"
-               vm_ip_addr2="10.6.178.222"
-               vm_name1="gwt-kubean-e2e-node221"
-               vm_name2="gwt-kubean-e2e-node222"
-               ;;
-            "KYLINV10")
-                vm_ip_addr1="10.6.178.73"
-                vm_ip_addr2="10.6.178.74"
-                vm_name1="gwt-kubean-e2e-node73"
-                vm_name2="gwt-kubean-e2e-node74"
-                ;;
-            "REDHAT8")
-                vm_ip_addr1="10.6.178.225"
-                vm_ip_addr2="10.6.178.226"
-                vm_name1="gwt-kubean-e2e-redhat8-node225"
-                vm_name2="gwt-kubean-e2e-redhat8-node226"
-                ;;
-            "REDHAT7")
-                vm_ip_addr1="10.6.178.223"
-                vm_ip_addr2="10.6.178.224"
-                vm_name1="gwt-kubean-e2e-redhat7-node223"
-                vm_name2="gwt-kubean-e2e-redhat7-node224"
-                ;;
-       esac
-    fi
-  if [ "${RUNNER_NAME}" == "kubean-e2e-runner1" ]; then
-      case ${OS_NAME} in
-          "CENTOS7")
-              vm_ip_addr1="172.30.41.71"
-              vm_ip_addr2="172.30.41.72"
-              vm_name1="gwt-kubean-e2e-node71"
-              vm_name2="gwt-kubean-e2e-node72"
-              ;;
-          "KYLINV10")
-              vm_ip_addr1="10.6.178.83"
-              vm_ip_addr2="10.6.178.84"
-              vm_name1="gwt-kubean-e2e-node83"
-              vm_name2="gwt-kubean-e2e-node84"
-              ;;
-          "REDHAT8")
-              vm_ip_addr1="172.30.41.73"
-              vm_ip_addr2="172.30.41.74"
-              vm_name1="gwt-kubean-e2e-redhat8-node73"
-              vm_name2="gwt-kubean-e2e-redhat8-node74"
-              ;;
-          "REDHAT7")
-              vm_ip_addr1="172.30.41.75"
-              vm_ip_addr2="172.30.41.76"
-              vm_name1="gwt-kubean-e2e-redhat7-node75"
-              vm_name2="gwt-kubean-e2e-redhat7-node76"
-              ;;
-          "CENTOS7-HK")
-              vm_ip_addr1="172.30.41.77"
-              vm_ip_addr2="172.30.41.78"
-              vm_name1="gwt-kubean-e2e-hk-node77"
-              vm_name2="gwt-kubean-e2e-hk-node78"
-              ;;
-     esac
-  fi
-  if [ "${RUNNER_NAME}" == "kubean-e2e-runner2" ]; then
-          case ${OS_NAME} in
-              "CENTOS7")
-                  vm_ip_addr1="10.6.178.201"
-                  vm_ip_addr2="10.6.178.202"
-                  vm_name1="gwt-kubean-e2e-node201"
-                  vm_name2="gwt-kubean-e2e-node202"
-                  ;;
-              "KYLINV10")
-                  vm_ip_addr1="10.6.178.93"
-                  vm_ip_addr2="10.6.178.94"
-                  vm_name1="gwt-kubean-e2e-node93"
-                  vm_name2="gwt-kubean-e2e-node94"
-                  ;;
-              "REDHAT8")
-                  vm_ip_addr1="10.6.178.205"
-                  vm_ip_addr2="10.6.178.206"
-                  vm_name1="gwt-kubean-e2e-redhat8-node205"
-                  vm_name2="gwt-kubean-e2e-redhat8-node206"
-                  ;;
-              "REDHAT7")
-                  vm_ip_addr1="10.6.178.203"
-                  vm_ip_addr2="10.6.178.204"
-                  vm_name1="gwt-kubean-e2e-redhat7-node203"
-                  vm_name2="gwt-kubean-e2e-redhat7-node204"
-                  ;;
-              "CENTOS7-HK")
-                  vm_ip_addr1="10.6.178.207"
-                  vm_ip_addr2="10.6.178.208"
-                  vm_name1="gwt-kubean-e2e-hk-node207"
-                  vm_name2="gwt-kubean-e2e-hk-node208"
-                  ;;
-        esac
-  fi
 
-  echo "vm_ip_addr1: $vm_ip_addr1"
-  echo "vm_ip_addr2: $vm_ip_addr2"
-}
 
 ### Clean up the docker containers before test
 function util::clean_online_kind_cluster() {
@@ -464,72 +339,56 @@ function util::clean_up(){
     exit $EXIT_CODE
 }
 
-function util::create_os_e2e_vms(){
-    # create 1master+1worker cluster
-    if [ -f $(pwd)/Vagrantfile ]; then
-        rm -f $(pwd)/Vagrantfile
-    fi
-    cp $(pwd)/hack/os_vagrantfiles/"${1}" $(pwd)/Vagrantfile
-    sed -i "s/sonobouyDefault_ip/${2}/" Vagrantfile
-    sed -i "s/sonobouyDefault2_ip/${3}/" Vagrantfile
-    vagrant up
-    vagrant status
-    ATTEMPTS=0
-    pingOK=0
-    ping -w 2 -c 1 $2|grep "0%" && pingOK=true || pingOK=false
-    until [ "${pingOK}" == "true" ] || [ $ATTEMPTS -eq 10 ]; do
-    ping -w 2 -c 1 $2|grep "0%" && pingOK=true || pingOK=false
-    echo "==> ping "$2 $pingOK
-    ATTEMPTS=$((ATTEMPTS + 1))
-    sleep 10
-    done
-    ping -c 5 ${2}
-    ping -c 5 ${3}
-}
+# not used, pre to delete
+# function util::create_os_e2e_vms(){
+#     # create 1master+1worker cluster
+#     if [ -f $(pwd)/Vagrantfile ]; then
+#         rm -f $(pwd)/Vagrantfile
+#     fi
+#     cp $(pwd)/hack/os_vagrantfiles/"${1}" $(pwd)/Vagrantfile
+ #    sed -i "s/sonobouyDefault_ip/${2}/" Vagrantfile
+# #     sed -i "s/sonobouyDefault2_ip/${3}/" Vagrantfile
+#     vagrant up
+#     vagrant status
+#     ATTEMPTS=0
+ #    pingOK=0
+#     ping -w 2 -c 1 $2|grep "0%" && pingOK=true || pingOK=false
+#     until [ "${pingOK}" == "true" ] || [ $ATTEMPTS -eq 10 ]; do
+#     ping -w 2 -c 1 $2|grep "0%" && pingOK=true || pingOK=false
+#     echo "==> ping "$2 $pingOK
+#     ATTEMPTS=$((ATTEMPTS + 1))
+#     sleep 10
+#     done
+#     ping -c 5 ${2}
+#     ping -c 5 ${3}
+# }
 
-function util::power_on_2vms(){
-  local OS_NAME=$1
-  echo "OS_NAME is: ${OS_NAME}"
-  if [[ ${OFFLINE_FLAG} == "true" ]]; then
-    util::vm_name_ip_init_offline_by_os ${OS_NAME}
-  else
-    util::vm_name_ip_init_online_by_os ${OS_NAME}
-  fi
-  echo "vm_name1: ${vm_name1}"
-  echo "vm_name2: ${vm_name2}"
-  SNAPSHOT_NAME=${POWER_ON_SNAPSHOT_NAME}
-  util::restore_vsphere_vm_snapshot ${VSPHERE_HOST} ${VSPHERE_PASSWD} ${VSPHERE_USER} "${SNAPSHOT_NAME}" "${vm_name1}"
-  util::restore_vsphere_vm_snapshot ${VSPHERE_HOST} ${VSPHERE_PASSWD} ${VSPHERE_USER} "${SNAPSHOT_NAME}" "${vm_name2}"
-  sleep 20
-  util::wait_ip_reachable "${vm_ip_addr1}" 60
-  util::wait_ip_reachable "${vm_ip_addr2}" 60
-  ping -c 5 ${vm_ip_addr1}
-  ping -c 5 ${vm_ip_addr2}
-}
 
-function util::power_on_vm_first(){
-  local OS_NAME=$1
-  echo "OS_NAME is: ${OS_NAME}"
-  util::vm_name_ip_init_online_by_os ${OS_NAME}
-  echo "vm_name1: ${vm_name1}"
-  SNAPSHOT_NAME=${POWER_ON_SNAPSHOT_NAME}
-  util::restore_vsphere_vm_snapshot ${VSPHERE_HOST} ${VSPHERE_PASSWD} ${VSPHERE_USER} "${SNAPSHOT_NAME}" "${vm_name1}"
-  sleep 20
-  util::wait_ip_reachable "${vm_ip_addr1}" 30
-  ping -c 5 ${vm_ip_addr1}
-}
+# not usee, pre to delete
+#function util::power_on_vm_first(){
+#  local OS_NAME=$1
+#  echo "OS_NAME is: ${OS_NAME}"
+#  util::vm_name_ip_init_online_by_os ${OS_NAME}
+ # echo "vm_name1: ${vm_name1}"
+#  SNAPSHOT_NAME=${POWER_ON_SNAPSHOT_NAME}
+#  util::restore_vsphere_vm_snapshot ${VSPHERE_HOST} ${VSPHERE_PASSWD} ${VSPHERE_USER} "${SNAPSHOT_NAME}" "${vm_name1}"
+#  sleep 20
+#  util::wait_ip_reachable "${vm_ip_addr1}" 30
+#  ping -c 5 ${vm_ip_addr1}
+#}
 
-function util::power_on_vm_second(){
-    local OS_NAME=$1
-    echo "OS_NAME is: ${OS_NAME}"
-    util::vm_name_ip_init_online_by_os ${OS_NAME}
-    echo "vm_name2: ${vm_name2}"
-    SNAPSHOT_NAME=${POWER_ON_SNAPSHOT_NAME}
-    util::restore_vsphere_vm_snapshot ${VSPHERE_HOST} ${VSPHERE_PASSWD} ${VSPHERE_USER} "${SNAPSHOT_NAME}" "${vm_name2}"
-    sleep 20
-    util::wait_ip_reachable "${vm_ip_addr2}" 30
-    ping -c 5 ${vm_ip_addr2}
-}
+# not usee, pre to delete
+# function util::power_on_vm_second(){
+#     local OS_NAME=$1
+#     echo "OS_NAME is: ${OS_NAME}"
+#     util::vm_name_ip_init_online_by_os ${OS_NAME}
+#     echo "vm_name2: ${vm_name2}"
+#     SNAPSHOT_NAME=${POWER_ON_SNAPSHOT_NAME}
+#     util::restore_vsphere_vm_snapshot ${VSPHERE_HOST} ${VSPHERE_PASSWD} ${VSPHERE_USER} "${SNAPSHOT_NAME}" "${vm_name2}"
+#     sleep 20
+#     util::wait_ip_reachable "${vm_ip_addr2}" 30
+ #    ping -c 5 ${vm_ip_addr2}
+# }
 
 
 function util::install_sshpass(){
@@ -545,6 +404,23 @@ function util::install_sshpass(){
         cd ..
     fi
 }
+
+# not usee, pre to delete
+# function vm_clean_up_by_name(){
+#     echo "$# vm to destroy"
+#     for vm in $@;do
+#         echo "start destroy: ${vm}"
+#         vm_id=`vagrant global-status |grep ${vm} -w|grep virtualbox|awk '{print $1}'`
+#         if [[ -n ${vm_id} ]]; then
+#             echo "destroy vm: ${vm}  ${vm_id}"
+#             vagrant destroy -f $vm_id
+#         else
+#             echo "${vm} not exists"
+#         fi
+#      done
+#    echo "destroy vagrant vm end."
+# }
+
 
 function vm_clean_up_by_name(){
     echo "$# vm to destroy"
@@ -570,6 +446,36 @@ function util::set_config_path(){
   export SOURCE_CONFIG_PATH=${source_config_path}
   echo "Set SOURCE_CONFIG_PATH: ${SOURCE_CONFIG_PATH}"
 }
+
+function install_retry_util() {
+  local tempfile=$(mktemp)
+  cat << EOF > $tempfile
+   if [ \$# -eq 0 ] ; then
+     echo "no command specified for retry_util()..."
+     exit 2
+   fi
+   for i in {1..3}
+   do
+      if \$* ; then
+        ## if success ,then exit with 0 at once.
+        echo "[\$*] successfully."
+        sleep 1
+        exit 0
+      else
+        ## just run again in next loop.
+        echo "WARNING [\$*] failed, retry: \$i"
+        sleep 2
+      fi
+   done
+   echo "[\$*] failed finally."
+   exit 2
+EOF
+chmod +x /usr/local/bin/retry_util.sh
+
+misc::timing::elapse
+}
+
+
 
 function util::debug_runner_vm_match(){
   echo "RUNNER_NAME: ${RUNNER_NAME}"
