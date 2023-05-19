@@ -4,14 +4,35 @@ on:
   schedule:
     # every day 14:00(UTC) = 22:00（Beijing),
     - cron: '0 20 * * *'
+env:
+
+  AIRGAP_RESOURCE_VM_IP: ${{ secrets.AIRGAP_RESOURCE_VM_IP }}
+
 
 jobs:
-  offline_e2e:
-    runs-on: [self-hosted, offline]
-    timeout-minutes: 900
+  down_load_airgap_files:
+    runs-on: [ self-hosted, airgap-resource ]
     permissions:
       packages: write
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        file_name: [ files-amd64, images-amd64, files-arm64, images-arm64, os-pkgs-centos7, os-pkgs-kylinv10, os-pkgs-redhat8, os-pkgs-redhat7 ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+  resource_build:
+    runs-on: [self-hosted, airgap-resource]
+    permissions:
+      packages: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        file_name: [ files-amd64, images-amd64, files-arm64, images-arm64, os-pkgs-centos7, os-pkgs-kylinv10, os-pkgs-redhat8, os-pkgs-redhat7 ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -19,6 +40,21 @@ jobs:
         #- uses: actions/setup-go@v3
         # with:
         #  go-version: 1.20.4
+      - name: check_version
+        continue-on-error: false
+        run: | 
+        CONTAINER_TAG=$(git describe --tags --abbrev=8 --dirty)
+        TAG_FIRST_PART=`echo ${CONTAINER_TAG}|awk -F "-" '{print $1}'`
+        TAG_SECOND_PART=`echo ${CONTAINER_TAG}|awk  -F "-" '{print $2 }'`
+        if [[ ${TAG_SECOND_PART} =~ rc[0-9]+ ]];then
+          TAG=`echo ${CONTAINER_TAG}|awk -F "-" '{print $1"-"$2 }'`
+        else
+          TAG=${TAG_FIRST_PART}
+        fi
+        hack/airgap_file_resource.sh ${AIRGAP_RESOURCE_VM_IP} ${TAG} "DOWNLOAD" "${{ matrix.file_name }}"
+      - name: build_resource
+        run: |
+        hack/airgap_file_resource.sh ${AIRGAP_RESOURCE_VM_IP} ${TAG} "BUILD"
 
       - name: offline_e2e
         env:
