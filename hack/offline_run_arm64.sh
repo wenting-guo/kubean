@@ -35,7 +35,7 @@ ARM64_SERVER_IP="10.0.6.17"
 ARM64_SERVER_PASSWORD="Admin@9000"
 sed -i "s/vm_ip_addr1/${vm_ip_addr1}/g" ${REPO_ROOT}/test/kubean_os_compatibility_e2e/e2e-install-cluster/hosts-conf-cm.yml
 sed -i "s/vm_ip_addr2/${vm_ip_addr2}/g" ${REPO_ROOT}/test/kubean_os_compatibility_e2e/e2e-install-cluster/hosts-conf-cm.yml
-sed -i "s/root_password/${KYLIN_VM_PASSWORD}/g" ${REPO_ROOT}/test/kubean_os_compatibility_e2e/e2e-install-cluster/hosts-conf-cm.yml
+sed -i "s/root_password/${VM_PASSWORD}/g" ${REPO_ROOT}/test/kubean_os_compatibility_e2e/e2e-install-cluster/hosts-conf-cm.yml
 # kubeanClusterOps.yml sed
 sed -i "s#image:#image: ${SPRAY_JOB}#" ${REPO_ROOT}/test/kubean_os_compatibility_e2e/e2e-install-cluster/kubeanClusterOps.yml
 sed -i "s#e2e-cluster1-install#${CLUSTER_OPERATION_NAME1}#" ${REPO_ROOT}/test/kubean_os_compatibility_e2e/e2e-install-cluster/kubeanClusterOps.yml
@@ -61,7 +61,7 @@ util::wait_ip_reachable "${vm_ip_addr2}" 10
 ginkgo -v -timeout=10h -race --fail-fast ./test/kubean_os_compatibility_e2e/  -- \
     --kubeconfig="${KUBECONFIG_FILE}" \
     --clusterOperationName="${CLUSTER_OPERATION_NAME1}" --vmipaddr="${vm_ip_addr1}" --vmipaddr2="${vm_ip_addr2}" \
-    --isOffline="true"  --vmPassword="${KYLIN_VM_PASSWORD}"  --arch=${arch}
+    --isOffline="true"  --vmPassword="${VM_PASSWORD}"  --arch=${arch}
 
 util::delete_kylin_vm ${vm_name1} ${ARM64_SERVER_IP} ${ARM64_SERVER_PASSWORD}
 util::delete_kylin_vm ${vm_name2} ${ARM64_SERVER_IP} ${ARM64_SERVER_PASSWORD}

@@ -6,8 +6,10 @@ on:
     - cron: '0 20 * * *'
 
 jobs:
-  offline_e2e:
+  git_ref:
     runs-on: [self-hosted, offline]
+    outputs:
+      git_tag: ${{ steps.gen_tag.outputs.TAG }}
     timeout-minutes: 900
     permissions:
       packages: write
@@ -16,22 +18,60 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-        #- uses: actions/setup-go@v3
-        # with:
-        #  go-version: 1.20.4
+      - name: gen_tag
+        run: |
+          GIT_TAG=$(git describe --tags --abbrev=8 --dirty)
+          TAG_SECOND_PART=`echo ${GIT_TAG}|awk  -F "-" '{print $2 }'`
+          if [[ ${TAG_SECOND_PART} =~ rc[0-9]+ ]];then 
+            TAG=`echo ${GIT_TAG}|awk -F "-" '{print $1"-"$2 }'`
+          else
+            TAG=`echo ${GIT_TAG}|awk -F "-" '{print $1}'`
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo ${{ runner.name }}
 
+  download_file:
+    runs-on: [self-hosted, offline]
+    needs: git_ref
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: download_file
+        with:
+          TAG: ${{ needs.git_ref.outputs.tag }}
+        run: |
+          hack/airgap_resource.sh  ${TAG} "DOWNLOAD"
+
+  build_resource_svc:
+    runs-on: [self-hosted, offline]
+    needs: download_file
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: build_resource
+        with:
+          TAG: ${{ needs.git_ref.outputs.tag }}
+        run: |
+          hack/airgap_resource.sh  ${TAG} "BUILD"
+
+  offline_e2e:
+    runs-on: [self-hosted, offline]
+    timeout-minutes: 900
+    needs: build_resource_svc
+    permissions:
+      packages: write
+      contents: read
+    steps:
       - name: offline_e2e
+        with:
+          TAG: ${{ needs.git_ref.outputs.tag }}
         env:
           VSPHERE_USER: ${{ secrets.VSPHERE_USER }}
           VSPHERE_PASSWD: ${{ secrets.VSPHERE_PASSWD }}
-          AMD_ROOT_PASSWORD: ${{ secrets.AMD_ROOT_PASSWORD }}
-          KYLIN_VM_PASSWORD: ${{ secrets.KYLIN_VM_PASSWORD }}
+          #AMD_ROOT_PASSWORD: ${{ secrets.AMD_ROOT_PASSWORD }}
+          ROOT_PASSWORD: ${{ secrets.AMD_ROOT_PASSWORD }}
+          # KYLIN_VM_PASSWORD: ${{ secrets.KYLIN_VM_PASSWORD }}
         run: |
-          CONTAINER_TAG=$(git describe --tags --abbrev=8 --dirty)
-          HELM_CHART_VERSION=`echo ${CONTAINER_TAG}|awk -F "-" '{print $1}'`
-          TAG_SECOND_PART=`echo ${CONTAINER_TAG}|awk  -F "-" '{print $2 }'`
-          if [[ ${TAG_SECOND_PART} =~ rc[0-9]+ ]];then 
-            HELM_CHART_VERSION=`echo ${CONTAINER_TAG}|awk -F "-" '{print $1"-"$2 }'`
-          fi
-          echo ${{ runner.name }}
-          bash hack/offline-e2e.sh  "${HELM_CHART_VERSION}" "${VSPHERE_USER}" "${VSPHERE_PASSWD}" "${AMD_ROOT_PASSWORD}" "${KYLIN_VM_PASSWORD}"  "${{ runner.name }}"
+          bash hack/offline-e2e.sh  "${TAG}" "${VSPHERE_USER}" "${VSPHERE_PASSWD}" "${AMD_ROOT_PASSWORD}" "${KYLIN_VM_PASSWORD}"  "${{ runner.name }}"

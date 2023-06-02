@@ -6,15 +6,15 @@ set -e
 ### This script is for offline e2e
 HELM_CHART_VERSION=$1
 export IMAGE_VERSION=$1
-export SPRAY_JOB_VERSION=$1
-export TARGET_VERSION=$1
+# export SPRAY_JOB_VERSION=$1
+# export TARGET_VERSION=$1
 export VSPHERE_USER=$2
 export VSPHERE_PASSWD=$3
 export AMD_ROOT_PASSWORD=$4
-export KYLIN_VM_PASSWORD=$5
+export VM_PASSWORD=$5
 export VSPHERE_HOST="10.64.56.11"
 export RUNNER_NAME=$6
-export SPRAY_JOB="m.daocloud.io/ghcr.io/kubean-io/spray-job:${SPRAY_JOB_VERSION}"
+export SPRAY_JOB="m.daocloud.io/ghcr.io/kubean-io/spray-job:${IMAGE_VERSION}"
 export REPO_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 export IMG_REGISTRY="ghcr.m.daocloud.io"
 export HELM_REPO="https://kubean-io.github.io/kubean-helm-chart"
@@ -41,10 +41,8 @@ export LOCAL_REPO_ALIAS="kubean_release"
 export LOCAL_RELEASE_NAME=kubean
 #= export E2eInstallClusterYamlFolder="e2e-install-cluster"
 
-chmod +x ${REPO_ROOT}/hack/offline_run_amd64.sh
-chmod +x ${REPO_ROOT}/hack/offline_run_arm64.sh
-chmod +x ${REPO_ROOT}/hack/offline_run_centos.sh
-chmod +x ${REPO_ROOT}/hack/run-network-e2e.sh
+chmod +x ${REPO_ROOT}/hack/*.sh
+
 
 registry_addr_amd64=${RUNNER_NODE_IP}:${REGISTRY_PORT_AMD64}
 registry_addr_arm64=${RUNNER_NODE_IP}:${REGISTRY_PORT_ARM64}
@@ -69,6 +67,8 @@ fi
 helm repo add ${local_helm_repo_alias} ${HELM_REPO}
 helm repo update
 helm repo list
+
+if [ "${"Stage"}" == "KUBEAN-COMPATIBILITY" ]; then
 
 KIND_VERSION="release-ci.daocloud.io/kpanda/kindest-node:v1.25.3"
 ./hack/local-up-kindcluster.sh "${HELM_CHART_VERSION}" "${IMAGE_VERSION}" "${HELM_REPO}" "${IMG_REGISTRY}" "${KIND_VERSION}" "${CLUSTER_PREFIX}"-host

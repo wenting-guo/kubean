@@ -4,6 +4,49 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+## check the release package is ok on vm
+
+
+
+
+
+function util::check_file(){
+  download_file_name=$1
+  old_tag="v0.0"
+  if [[ ! -f ${TAG_FILE} ]];then
+    echo "tag file is not exsit, touch it."
+    rm -fr ${DOWNLOAD_ROOT_FOLDER}/"${NEW_TAG}"
+    mkdir -p ${DOWNLOAD_ROOT_FOLDER}/"${NEW_TAG}"
+    echo "tag=${NEW_TAG}" > "${TAG_FILE}"
+  else
+    old_tag=$(cat ${TAG_FILE}|grep "tag"|awk -F "=" '{print $2}')
+    echo "old tag is: ${old_tag}"
+    if [[ "${old_tag}" != "${NEW_TAG}" ]];then
+      rm -fr ${DOWNLOAD_ROOT_FOLDER}/"${NEW_TAG}"
+      mkdir -p ${DOWNLOAD_ROOT_FOLDER}/"${NEW_TAG}"
+      echo "tag=${NEW_TAG}" > "${TAG_FILE}"
+    else
+      echo "tag is equal."
+    fi
+  fi
+  util::wget_file "${FILE_PART_NAME}"
+}
+
+# Do the file download by wget
+function util::wget_file(){
+  file_part_name=$1
+  local_file="${DOWNLOAD_ROOT_FOLDER}/${NEW_TAG}/${FILE_PART_NAME}-${NEW_TAG}.tar.gz"
+  if [[ -f "${local_file}" ]];then
+    echo "${file_part_name} is exist, nothing to do"
+  else
+    echo "${file_part_name} not exists, download it..."
+    file_url=${BASE_URL}/${NEW_TAG}/${FILE_PART_NAME}-${NEW_TAG}.tar.gz
+    wget -q -c -T 1m -P "${DOWNLOAD_ROOT_FOLDER}/${NEW_TAG}" "${file_url}"
+    echo "Download file end."
+  fi
+}
+
+
 ### Clean up the docker containers before test
 function util::clean_offline_kind_cluster() {
    echo "======= container prefix: ${CONTAINERS_PREFIX}"
@@ -55,27 +98,7 @@ function util::restore_vsphere_vm_snapshot() {
   echo "Restore vm snapshot end!"
 }
 
-###  Install MinIO in kind
-function util::install_minio(){
-  local MINIO_USER=$1
-  local MINIO_PASS=$2
-  local kubeconfig_file=$3
-  helm repo add minio-official https://charts.min.io
-  helm repo update minio-official
-  helm pull minio-official/minio --version=5.0.1
 
-  # will be replaced by operator later
-  helm upgrade --install  --create-namespace --cleanup-on-fail \
-            --set rootUser=${MINIO_USER},rootPassword=${MINIO_PASS} \
-            --set mode="standalone" \
-            --set service.type=NodePort \
-            --set consoleService.type=NodePort \
-            --set resources.requests.memory=200Mi \
-            --set persistence.size=10Gi \
-            --kubeconfig "${kubeconfig_file}" \
-            minio minio-official/minio --wait
-
-}
 
 
 ### Install docker_registry in kind
