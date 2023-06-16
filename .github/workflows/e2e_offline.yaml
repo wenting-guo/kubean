@@ -60,6 +60,7 @@ jobs:
           VSPHERE_PASSWD: ${{ secrets.VSPHERE_PASSWD }}
           AMD_ROOT_PASSWORD: ${{ secrets.AMD_ROOT_PASSWORD }}
           KYLIN_VM_PASSWORD: ${{ secrets.KYLIN_VM_PASSWORD }}
+          ARM_SERVER_PASSWORD: ${{ secrets.ARM_SERVER_PASSWORD }}
         run: |
           echo "${KUBEAN_TAG}"
-          bash hack/offline-e2e.sh  "${KUBEAN_TAG}" "${VSPHERE_USER}" "${VSPHERE_PASSWD}" "${AMD_ROOT_PASSWORD}" "${KYLIN_VM_PASSWORD}"  "${{ runner.name }}"
+          bash hack/offline-e2e.sh  "${KUBEAN_TAG}" "${VSPHERE_USER}" "${VSPHERE_PASSWD}" "${AMD_ROOT_PASSWORD}" "${KYLIN_VM_PASSWORD}"  "${ARM_SERVER_PASSWORD}" "${{ runner.name }}"
