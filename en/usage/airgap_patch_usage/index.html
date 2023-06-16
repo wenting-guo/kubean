@@ -19,7 +19,7 @@
         <link rel="next" href="../../develop/roadmap/">
       
       <link rel="icon" href="../../assets/images/kubean_logo_1.svg">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
     
     
       
@@ -613,15 +613,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#generate-incremental-offline-packages" class="md-nav__link">
-    Generate incremental offline packages
+  <a href="#generate-an-incremental-offline-package" class="md-nav__link">
+    Generate an incremental offline package
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#use-the-incremental-offline-package" class="md-nav__link">
-    Use the incremental offline package:
+    Use the incremental offline package
   </a>
   
 </li>
@@ -718,6 +718,62 @@
           Releases
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/v0.6.3/" class="md-nav__link">
+        V0.6.3
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/v0.6.2/" class="md-nav__link">
+        V0.6.2
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/v0.6.1/" class="md-nav__link">
+        V0.6.1
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../releases/v0.6.0/" class="md-nav__link">
+        V0.6.0
+      </a>
+    </li>
+  
+
+            
           
             
               
@@ -990,15 +1046,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#generate-incremental-offline-packages" class="md-nav__link">
-    Generate incremental offline packages
+  <a href="#generate-an-incremental-offline-package" class="md-nav__link">
+    Generate an incremental offline package
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#use-the-incremental-offline-package" class="md-nav__link">
-    Use the incremental offline package:
+    Use the incremental offline package
   </a>
   
 </li>
@@ -1023,10 +1079,10 @@
 
 <h1 id="generation-and-use-of-incremental-offline-packages">Generation and use of incremental offline packages<a class="headerlink" href="#generation-and-use-of-incremental-offline-packages" title="Permanent link">&para;</a></h1>
 <p>To meet users' needs for components of certain versions, Kubean provides the script <code>artifacts/offline_patch.py</code> to generate a corresponding version of offline packages based on the configuration file <code>manifest.yml</code>.</p>
-<h2 id="generate-incremental-offline-packages">Generate incremental offline packages<a class="headerlink" href="#generate-incremental-offline-packages" title="Permanent link">&para;</a></h2>
+<h2 id="generate-an-incremental-offline-package">Generate an incremental offline package<a class="headerlink" href="#generate-an-incremental-offline-package" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Create a new <code>manifest.yml</code> file in a folder, with the following example:</li>
-</ol>
+<li>
+<p>Create a new <code>manifest.yml</code> file in a folder, with the following example:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">image_arch</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;amd64&quot;</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;arm64&quot;</span>
@@ -1044,7 +1100,7 @@
 <span class="nt">etcd_version</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;v3.5.3&quot;</span>
 </code></pre></div>
-<ol>
+</li>
 <li>
 <p>Create a new <code>data</code> folder in the same folder</p>
 </li>
@@ -1054,7 +1110,7 @@
 </code></pre></div>
 </li>
 </ol>
-<h2 id="use-the-incremental-offline-package">Use the incremental offline package:<a class="headerlink" href="#use-the-incremental-offline-package" title="Permanent link">&para;</a></h2>
+<h2 id="use-the-incremental-offline-package">Use the incremental offline package<a class="headerlink" href="#use-the-incremental-offline-package" title="Permanent link">&para;</a></h2>
 <p>The directory structure of the incremental package is as follows:</p>
 <div class="highlight"><pre><span></span><code>data
 └── v_offline_patch
@@ -1074,15 +1130,17 @@
     │       └── offline-images.tar.gz
     └── kubeanofflineversion.cr.patch.yaml
 </code></pre></div>
-<p>(1). Write file data into MinIO</p>
+<ol>
+<li>
+<p>Write file data into MinIO</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>data/v_offline_patch/amd64/files
 
 $<span class="w"> </span><span class="nv">MINIO_USER</span><span class="o">=</span><span class="si">${</span><span class="nv">username</span><span class="si">}</span><span class="w"> </span><span class="nv">MINIO_PASS</span><span class="o">=</span><span class="si">${</span><span class="nv">password</span><span class="si">}</span><span class="w"> </span>./import_files.sh<span class="w"> </span><span class="si">${</span><span class="nv">minio_address</span><span class="si">}</span>
 </code></pre></div>
-<ul>
-<li><code>minio_address</code> is the <code>minio API Server</code> address, typically on port 9000, for example: <code>http://1.2.3.4:9000</code>.</li>
-</ul>
-<p>(2). Write image data to the docker registry (version 2.6.2 recommended) or harbor</p>
+<p><code>minio_address</code> is the <code>minio API Server</code> address, typically on port 9000, for example: <code>http://1.2.3.4:9000</code>.</p>
+</li>
+<li>
+<p>Write image data to the docker registry (recommended version 2.6.2) or harbor</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>data/v_offline_patch/amd64/images<span class="w"> </span>
 
 <span class="c1"># 1. Non-secure password-free mode</span>
@@ -1096,13 +1154,17 @@ $<span class="w"> </span><span class="nv">DEST_USER</span><span class="o">=</spa
 <li><code>DEST_USER</code> and <code>DEST_PASS</code> need to be set when username and password authentication exists for the image registry.</li>
 <li><code>registry_address</code> is the address of the image registry, e.g. <code>1.2.3.4:5000</code>.</li>
 </ul>
-<p>(3). Write <code>kubeanofflineversion.cr.patch.yaml</code> to the k8s cluster</p>
+</li>
+<li>
+<p>Write <code>kubeanofflineversion.cr.patch.yaml</code> to the k8s cluster</p>
 <div class="highlight"><pre><span></span><code>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>data/v_offline_patch
 $<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>kubeanofflineversion.cr.patch.yaml<span class="w"> </span>
 </code></pre></div>
-<ul>
-<li>This step is to inform the kubean-operator of the new software version available for offline use.</li>
-</ul>
+<blockquote>
+<p>This step is to inform the kubean-operator of the new software version available for offline use.</p>
+</blockquote>
+</li>
+</ol>
 
 
 
@@ -1178,7 +1240,7 @@ $<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </
     <script id="__config" type="application/json">{"base": "../..", "features": ["search.suggest", "search.highlight", "content.tabs.link", "content.code.copy", "navigation.footer"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.b4d07000.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a51614de.min.js"></script>
       
     
   <script>document$.subscribe(() => {const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});})</script></body>
